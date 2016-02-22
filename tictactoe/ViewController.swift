@@ -100,7 +100,7 @@ class ViewController: UIViewController {
                     if playList2.contains(spot) || playList.contains(spot) {
                         
                     } else {
-                        possibleMove.append(spot)
+                        return spot
                     }
                 }
             }
