@@ -119,27 +119,20 @@ class ViewController: UIViewController {
             }
         }
         
-        // if there are no winning or losing moves
-//        if possibleLoses.count == 0 && possibleWins.count == 0 {
-//            for spot in 1...9 {
-//                if playList.contains(spot) || playList2.contains(spot) {
-//                    
-//                } else {
-//                    possibleMove.append(spot)
-//                }
-//            }
-//        }
-        
-        if possibleMove.count == 0 {
+        // if no possible wins or loses pick an empty spot
+        if possibleMove.count > 0 {
+            
+            nextMove = possibleMove[Int(arc4random_uniform(UInt32(possibleMove.count)))]
+            
+        } else {
+            
             if spacesLeft.count > 0 {
+                
                 nextMove = spacesLeft[spacesLeft.startIndex.advancedBy(Int(arc4random_uniform(UInt32(possibleMove.count))))]
+                
             }
         }
         
-        
-        if possibleMove.count > 0 {
-            nextMove = possibleMove[Int(arc4random_uniform(UInt32(possibleMove.count)))]
-        }
         
         
         print("possible wins \(possibleWins)")
@@ -152,15 +145,19 @@ class ViewController: UIViewController {
         possibleLoses.removeAll(keepCapacity: false)
         possibleWins.removeAll(keepCapacity: false)
         
-
         playerTurn++
-        self.spacesLeft.insert(nextMove!)
+        spacesLeft.insert(nextMove!)
+        
         return nextMove!
     }
     
     func newGame() {
+        // clear move list
         playerOneMoves.removeAll(keepCapacity: false)
         playerTwoMoves.removeAll(keepCapacity: false)
+        
+        
+        // clear and setup buttons
         for index in 1...9 {
             let tile = self.view.viewWithTag(index) as! UIButton
             tile.enabled = true
@@ -168,19 +165,25 @@ class ViewController: UIViewController {
         }
         statusLabel.text = "Player 1's turn!"
         playerTurn = 1
+        
     }
     
     func isWinner(player: Int) -> Int {
         var winner = 0
         var moveList = Set<Int>()
 
+        //make sure we are looking at right player moves
         if player == 1 {
+            
             moveList = playerOneMoves
-        }
-        else {
-            moveList = playerTwoMoves
-           }
         
+        } else {
+            
+            moveList = playerTwoMoves
+            
+        }
+        
+        // check and see if there are any winning combonations
         for combo in winningComboniations  {
             if moveList.contains(combo[0]) && moveList.contains(combo[1]) && moveList.contains(combo[2]) && moveList.count > 2 {
                 
@@ -194,33 +197,46 @@ class ViewController: UIViewController {
                 
             }
         }
+        
+        
         return winner
     }
+    
+    
     @IBAction func buttonPress(sender: AnyObject) {
+        
+        // if button already selected infom the user
         if playerTwoMoves.contains(sender.tag) || playerOneMoves.contains(sender.tag) {
+            
             statusLabel.text = "Square already used!"
+            
         } else {
         
-        if playerTurn % 2 == 0 {
-        }
-        else {
-            playerOneMoves.insert(sender.tag)
-            
-            sender.setTitle("O", forState: UIControlState.Normal)
-            statusLabel.text = "Player 2's turn!"
-            if isWinner(1) == 0 {
-            
-            
-                let nextMove = playDefense()
-                playerTwoMoves.insert(nextMove)
-                let tmpButton = self.view.viewWithTag(nextMove) as! UIButton
-                tmpButton.setTitle("X", forState: UIControlState.Normal)
-                statusLabel.text = "Player 1's turn!"
-                isWinner(2)
+            if playerTurn % 2 == 0 {
+                
+            } else {
+                
+                //add button to player move list
+                playerOneMoves.insert(sender.tag)
+                sender.setTitle("O", forState: UIControlState.Normal)
+                statusLabel.text = "Player 2's turn!"
+                if isWinner(1) == 0 {
+                    
+                    // if no winner play defense
+                    let nextMove = playDefense()
+                    playerTwoMoves.insert(nextMove)
+                    let tmpButton = self.view.viewWithTag(nextMove) as! UIButton
+                    tmpButton.setTitle("X", forState: UIControlState.Normal)
+                    statusLabel.text = "Player 1's turn!"
+                    
+                    //check and see if computer won
+                    isWinner(2)
+                    
+                }
             }
-        }
-        
-        playerTurn++
+            
+            // if all 9 turns used up and no winner call draw
+            playerTurn++
             if playerTurn > 9 && isWinner(1) < 1 {
                 statusLabel.text = "Cat Game"
                 for index in 1...9 {
@@ -229,12 +245,16 @@ class ViewController: UIViewController {
                 }
 
             }
+            
         }
     }
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        
+        
         newGame()
+        
     }
 
     override func didReceiveMemoryWarning() {
