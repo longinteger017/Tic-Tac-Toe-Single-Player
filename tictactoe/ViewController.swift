@@ -1,4 +1,4 @@
-//
+ //
 //  ViewController.swift
 //  tictactoe
 //
@@ -24,19 +24,146 @@ class ViewController: UIViewController {
     @IBOutlet var button8: UIButton!
     @IBOutlet var button9: UIButton!
     
-    @IBAction func newGameButton(sender: AnyObject) {
-        newGame()
-    }
     var winningComboniations = [[1,2,3],[4,5,6],[7,8,9],[1,4,7],[2,5,8],[3,6,9],[1,5,9],[3,5,7]]
-    var playerOneMoves:Array<Int> = []
-    var playerTwoMoves:Array<Int> = []
+    var playerOneMoves = Set<Int>()
+    var playerTwoMoves = Set<Int>()
+    var possibleMove = Array<Int>()
     var playerTurn = 1
+    var nextMove:Int?  = nil
+    var spacesLeft = Set<Int>()
+    let allSpaces: Set<Int> = [1,2,3,4,5,6,7,8,9]
+
+
+    
+    
+    @IBAction func newGameButton(sender: AnyObject) {
+        // start new game
+        newGame()
+        
+    }
+    
+    
+
+    
+    func playDefense() -> Int{
+        
+        let playList = playerOneMoves
+        let playList2 = playerTwoMoves
+        var possibleLoses = Array<Array<Int>>()
+        var possibleWins = Array<Array<Int>>()
+        
+        
+        // determine what spaces are open
+        spacesLeft = allSpaces.subtract(playerOneMoves.union(playerTwoMoves))
+
+        // check for any possible winning/losing plays for human player
+        // checks each possible winning combo and sees if human player is holding 2 spaces with computer holding none or vis a versa
+        for combo in winningComboniations {
+            var count = 0
+            for play in combo {
+                
+                if playList.contains(play) {
+                    
+                    count++
+                    
+                }
+                
+                if playList2.contains(play) {
+                    
+                    count--
+                    
+                }
+                
+                if count == 2 {
+                    
+                    possibleLoses.append(combo)
+                    count = 0
+                    
+                }
+                
+                if count == -2 {
+                    
+                    possibleWins.append(combo)
+                    count = 0
+                    
+                }
+                
+            }
+            
+            
+        }
+        
+        // if finds any possible winning moves add them to possible moves set
+        if possibleWins.count > 0 {
+            for combo in possibleWins {
+                for spot in combo {
+                    if playList2.contains(spot) || playList.contains(spot) {
+                        
+                    } else {
+                        possibleMove.append(spot)
+                    }
+                }
+            }
+        }
+        
+        // if finds any possible losing moves add them to possible moves set
+        if possibleLoses.count > 0 {
+            for combo in possibleLoses {
+                for spot in combo {
+                    if playList.contains(spot) || playList2.contains(spot) {
+                        
+                    } else {
+                        possibleMove.append(spot)
+                    }
+                }
+            }
+        }
+        
+        // if there are no winning or losing moves
+//        if possibleLoses.count == 0 && possibleWins.count == 0 {
+//            for spot in 1...9 {
+//                if playList.contains(spot) || playList2.contains(spot) {
+//                    
+//                } else {
+//                    possibleMove.append(spot)
+//                }
+//            }
+//        }
+        
+        if possibleMove.count == 0 {
+            if spacesLeft.count > 0 {
+                nextMove = spacesLeft[spacesLeft.startIndex.advancedBy(Int(arc4random_uniform(UInt32(possibleMove.count))))]
+            }
+        }
+        
+        
+        if possibleMove.count > 0 {
+            nextMove = possibleMove[Int(arc4random_uniform(UInt32(possibleMove.count)))]
+        }
+        
+        
+        print("possible wins \(possibleWins)")
+        print("possible loses \(possibleLoses)")
+        print("used spaces \(playList) \(playList2)")
+        print("possible moves \(possibleMove)")
+        print("next move \(nextMove!)")
+        
+        possibleMove.removeAll(keepCapacity: false)
+        possibleLoses.removeAll(keepCapacity: false)
+        possibleWins.removeAll(keepCapacity: false)
+        
+
+        playerTurn++
+        self.spacesLeft.insert(nextMove!)
+        return nextMove!
+    }
     
     func newGame() {
         playerOneMoves.removeAll(keepCapacity: false)
         playerTwoMoves.removeAll(keepCapacity: false)
         for index in 1...9 {
-            var tile = self.view.viewWithTag(index) as UIButton
+            let tile = self.view.viewWithTag(index) as! UIButton
+            tile.enabled = true
             tile.setTitle("",forState: UIControlState.Normal)
         }
         statusLabel.text = "Player 1's turn!"
@@ -45,9 +172,8 @@ class ViewController: UIViewController {
     
     func isWinner(player: Int) -> Int {
         var winner = 0
-        var moveList = [Int]()
-        playerOneMoves.sort { $0 < $1 }
-        playerTwoMoves.sort { $0 < $1 }
+        var moveList = Set<Int>()
+
         if player == 1 {
             moveList = playerOneMoves
         }
@@ -56,40 +182,52 @@ class ViewController: UIViewController {
            }
         
         for combo in winningComboniations  {
-            if contains(moveList, combo[0]) && contains(moveList, combo[1]) && contains(moveList, combo[2]) && moveList.count > 2 {
+            if moveList.contains(combo[0]) && moveList.contains(combo[1]) && moveList.contains(combo[2]) && moveList.count > 2 {
                 
                 winner = player
-                statusLabel.text = "Player \(player)'s' has won the game!"
+                statusLabel.text = "Player \(player) has won the game!"
+                for index in 1...9 {
+                    let tile = self.view.viewWithTag(index) as! UIButton
+                    tile.enabled = false
+                    }
                 
                 
             }
         }
-        println(winner)
         return winner
     }
     @IBAction func buttonPress(sender: AnyObject) {
-        if contains(playerTwoMoves, sender.tag) || contains(playerOneMoves, sender.tag) {
+        if playerTwoMoves.contains(sender.tag) || playerOneMoves.contains(sender.tag) {
             statusLabel.text = "Square already used!"
         } else {
         
         if playerTurn % 2 == 0 {
-            playerTwoMoves.append(sender.tag)
-            
-            sender.setTitle("X", forState: UIControlState.Normal)
-            statusLabel.text = "Player 1's turn!"
-            isWinner(2)
         }
         else {
-            playerOneMoves.append(sender.tag)
+            playerOneMoves.insert(sender.tag)
             
             sender.setTitle("O", forState: UIControlState.Normal)
             statusLabel.text = "Player 2's turn!"
-            isWinner(1)
+            if isWinner(1) == 0 {
+            
+            
+                let nextMove = playDefense()
+                playerTwoMoves.insert(nextMove)
+                let tmpButton = self.view.viewWithTag(nextMove) as! UIButton
+                tmpButton.setTitle("X", forState: UIControlState.Normal)
+                statusLabel.text = "Player 1's turn!"
+                isWinner(2)
+            }
         }
         
         playerTurn++
             if playerTurn > 9 && isWinner(1) < 1 {
                 statusLabel.text = "Cat Game"
+                for index in 1...9 {
+                    let tile = self.view.viewWithTag(index) as! UIButton
+                    tile.enabled = false
+                }
+
             }
         }
     }
