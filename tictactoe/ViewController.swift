@@ -30,7 +30,6 @@ class ViewController: UIViewController {
     var possibleMove = Array<Int>()
     var playerTurn = 1
     var nextMove:Int?  = nil
-    var spacesLeft = Set<Int>()
     let allSpaces: Set<Int> = [1,2,3,4,5,6,7,8,9]
 
 
@@ -46,15 +45,13 @@ class ViewController: UIViewController {
 
     
     func playDefense() -> Int{
-        
-        let playList = playerOneMoves
-        let playList2 = playerTwoMoves
+
         var possibleLoses = Array<Array<Int>>()
         var possibleWins = Array<Array<Int>>()
         
         
         // determine what spaces are open
-        spacesLeft = allSpaces.subtract(playerOneMoves.union(playerTwoMoves))
+        let spacesLeft = allSpaces.subtract(playerOneMoves.union(playerTwoMoves))
 
         // check for any possible winning/losing plays for human player
         // checks each possible winning combo and sees if human player is holding 2 spaces with computer holding none or vis a versa
@@ -62,13 +59,13 @@ class ViewController: UIViewController {
             var count = 0
             for play in combo {
                 
-                if playList.contains(play) {
+                if playerOneMoves.contains(play) {
                     
                     count++
                     
                 }
                 
-                if playList2.contains(play) {
+                if playerTwoMoves.contains(play) {
                     
                     count--
                     
@@ -97,7 +94,7 @@ class ViewController: UIViewController {
         if possibleWins.count > 0 {
             for combo in possibleWins {
                 for spot in combo {
-                    if playList2.contains(spot) || playList.contains(spot) {
+                    if playerTwoMoves.contains(spot) || playerOneMoves.contains(spot) {
                         
                     } else {
                         return spot
@@ -110,7 +107,7 @@ class ViewController: UIViewController {
         if possibleLoses.count > 0 {
             for combo in possibleLoses {
                 for spot in combo {
-                    if playList.contains(spot) || playList2.contains(spot) {
+                    if playerOneMoves.contains(spot) || playerTwoMoves.contains(spot) {
                         
                     } else {
                         possibleMove.append(spot)
@@ -126,9 +123,9 @@ class ViewController: UIViewController {
             
         } else {
             
-            if spacesLeft.count > 0 {
+            if allSpaces.subtract(playerOneMoves.union(playerTwoMoves)).count > 0 {
                 
-                nextMove = spacesLeft[spacesLeft.startIndex.advancedBy(Int(arc4random_uniform(UInt32(possibleMove.count))))]
+                nextMove = spacesLeft[spacesLeft.startIndex.advancedBy(Int(arc4random_uniform(UInt32(spacesLeft.count))))]
                 
             }
         }
@@ -137,7 +134,7 @@ class ViewController: UIViewController {
         
         print("possible wins \(possibleWins)")
         print("possible loses \(possibleLoses)")
-        print("used spaces \(playList) \(playList2)")
+      //  print("used spaces \(playList) \(playList2)")
         print("possible moves \(possibleMove)")
         print("next move \(nextMove!)")
         
@@ -146,7 +143,6 @@ class ViewController: UIViewController {
         possibleWins.removeAll(keepCapacity: false)
         
         playerTurn++
-        spacesLeft.insert(nextMove!)
         
         return nextMove!
     }
@@ -212,9 +208,9 @@ class ViewController: UIViewController {
             
         } else {
         
-            if playerTurn % 2 == 0 {
+            if playerTurn % 2 != 0 {
                 
-            } else {
+        //    } else {
                 
                 //add button to player move list
                 playerOneMoves.insert(sender.tag)
